@@ -31,6 +31,8 @@ key_pair_name   = "my-key-pair"
 key_pair_tag    = "my-keyy"
 public_key_path = "./id_rsa.pub"
 
-
+# db_username and pass
+db_username = "db-user"
+db_password = "db-pass"
 
 
