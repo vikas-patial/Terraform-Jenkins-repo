@@ -1,0 +1,67 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/vikas-patial/Terraform-Jenkins-repo.git'
+            }
+        }
+
+        stage('Terraform Init') {
+            steps {
+                script {
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws_key']]) {
+                        sh 'terraform init'
+                    }
+                }
+            }
+        }
+
+        stage('Terraform Plan') {
+            steps {
+                script {
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws_key']]) {
+                        sh """
+                        terraform plan -var "access_key=${AWS_ACCESS_KEY_ID}" -var "secret_key=${AWS_SECRET_ACCESS_KEY}"
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Terraform Apply') {
+            steps {
+                script {
+                    def userInput = input message: 'Do you want to run apply?', ok: 'OK'
+                    
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws_key']]) {
+                        sh """
+                        terraform apply -var "access_key=${AWS_ACCESS_KEY_ID}" -var "secret_key=${AWS_SECRET_ACCESS_KEY}" -auto-approve
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Destroy Infrastructure (Optional)') {
+            steps {
+                script {
+                    // Prompt user to confirm destruction
+                    def destroyConfirmation = input message: 'Do you want to destroy the infrastructure?', parameters: [booleanParam(defaultValue: false, description: '', name: 'Destroy')]
+
+                    if (destroyConfirmation) {
+                        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws_key']]) {
+                            // Destroy all resources
+                            sh """
+                            terraform destroy -var "access_key=${AWS_ACCESS_KEY_ID}" -var "secret_key=${AWS_SECRET_ACCESS_KEY}" -auto-approve
+                            """
+                        }
+                    } else {
+                        echo "Skipping infrastructure destruction."
+                    }
+                }
+            }
+        }
+    }
+}
