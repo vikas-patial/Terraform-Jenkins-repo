@@ -32,7 +32,7 @@ key_pair_tag    = "my-keyy"
 public_key_path = "./id_rsa.pub"
 
 # db_username and pass
-db_username = "db_user"
+db_username = "enter_db_Pass_here"
 db_password = "db-pass"
 
 
